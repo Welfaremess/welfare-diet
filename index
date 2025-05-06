@@ -324,7 +324,7 @@ html, body {
 <button id="pdfButton" class="floating-button">📄</button>
 
 <script>
-const PASSWORD = "staffpass123";
+const PASSWORD = "staffpass123"; //staff password
 const SHEET_ID = "1KCgj6xJNj7gpJEwKH8fj3I_SldZsg1mKHiOA_8VESC0";
 const SHEET_NAME = "Diet entry";
 const SHEET_NAME1 = "Instalments";
