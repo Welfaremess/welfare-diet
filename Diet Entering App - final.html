@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- jsPDF library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- jsPDF-AutoTable plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Staff Diet Entry</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      background: #6200ea;
+      color: white;
+      padding: 1rem 3rem 1rem 1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .top-buttons {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 0.5rem;
+      padding-left: 1rem;
+      pointer-events: auto;
+    }
+
+    .top-buttons button {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      transition: background 0.2s;
+    }
+
+    .top-buttons button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .tabs {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      z-index: 10;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      font-weight: bold;
+      color: #6200ea;
+    }
+
+    .tab-button.active {
+      background: #6200ea;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 1rem;
+      margin-bottom: 80px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .diet-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .diet-button {
+      padding: 0.5rem 1rem;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .diet-button.selected {
+      background: #6200ea;
+      color: white;
+    }
+
+    .floating-button {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      background: #6200ea;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      font-size: 24px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    input[type="date"], input[type="password"], #searchInput {
+      padding: 0.7rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      border-color: #6200ea;
+      outline: none;
+    }
+
+    #searchInput {
+      margin: 1rem 0;
+      display: block;
+    }
+    .diet-off-card {
+          background-color: #fff;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          padding: 1rem;
+          margin: 0.5rem 0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          display: flex;
+	  flex-direction: column; /* Ensure vertical stacking */
+          width:100%;
+     }
+
+     .diet-off-card-content {
+          font-size: 1rem;
+	  margin-bottom: 0.5 rem;
+     }
+
+     .diet-off-card strong {
+          font-size: 1.1rem;
+          color: #6200ea;
+     }
+
+     .diet-off-card span {
+          color: #555;
+     }
+/* Dialog box styles */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-box {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.dialog-box h3 {
+  margin-top: 0;
+}
+
+.dialog-box button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dialog-box button:hover {
+  background-color: #0056b3;
+}
+
+/* Loading screen styles */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(250, 250, 250, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  border: 6px solid #eee;
+  border-top: 6px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-screen p {
+  font-size: 1rem;
+  color: #555;
+  margin: 0;
+}
+
+
+
+
+    @media (min-width: 600px) {
+      .card {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 500px;
+      }
+      .diet-off-card {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 500px;
+      }
+      
+    }
+	* {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="top-buttons" id="topControls" style="display: none;">
+    <button onclick="backToDateCards()" title="Back">←</button>
+  </div>
+  Staff Diet Entry
+</header>
+
+<div id="tab-password" class="tab-content active">
+  <div class="card">
+    <label>Password:</label>
+    <input type="password" id="passwordInput" />
+    <button onclick="savePassword()" style="margin-top: 1rem; width: 100%; padding: 0.7rem; background: #6200ea; color: white; border: none; border-radius: 6px;">Save</button>
+  </div>
+</div>
+
+<div id="tab-saved" class="tab-content"></div>
+<div id="tab-fill" class="tab-content"></div>
+<div id="tab-diet-off" class="tab-content"></div> 
+
+<div class="tabs">
+  <div class="tab-button active" onclick="switchTab('password', event)">Password</div>
+  <div class="tab-button" onclick="switchTab('saved', event)">Saved Diets</div>
+  <div class="tab-button" onclick="switchTab('fill', event)">Fill Diets</div>
+  <div class="tab-button" onclick="switchTab('diet-off', event)">Diet Off</div>
+
+</div>
+
+<button id="floatingButton" class="floating-button" onclick="submitDiets()">✓</button>
+<button id="pdfButton" class="floating-button">📄</button>
+
+<script>
+const PASSWORD = "staffpass123";
+const SHEET_ID = "1KCgj6xJNj7gpJEwKH8fj3I_SldZsg1mKHiOA_8VESC0";
+const SHEET_NAME = "Diet entry";
+const SHEET_NAME1 = "Instalments";
+const API_KEY = "AIzaSyCzg84aqc_4Phwc142-HqDGYMv9Dy2Ctqo";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk3109-Si43QRoNvnoqmjhceeQ8Ady6RQgB1TVeO-zQKTKjnjy351tuTr9bzQCRkY/exec";
+
+let sheetData = [];
+let sheetDataOff = [];
+let selectedDate = "";
+let members = [];
+let currentDiets = [];
+let savedDateData = [];
+
+function switchTab(tab) {
+  if ((tab === 'saved' || tab === 'fill' || tab === 'diet-off') && localStorage.getItem('staffPass') !== PASSWORD) {
+    alert("Incorrect or missing password.");
+    return;
+  }
+
+  // Update the URL fragment without reloading the page
+  window.location.hash = tab;
+
+  // Hide all tab contents
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  // Remove active class from all tab buttons
+  document.querySelectorAll(".tab-button").forEach(el => el.classList.remove("active"));
+  
+  // Show the selected tab content and highlight the active button
+  const activeTabButton = document.querySelector(`.tab-button[onclick*="${tab}"]`);
+  if (activeTabButton) {
+    activeTabButton.classList.add("active");
+  }
+
+  document.getElementById(`tab-${tab}`).classList.add("active");
+
+  // Update visibility of floating buttons based on tab
+  document.getElementById("topControls").style.display = "none";
+  document.getElementById("searchInput")?.remove();
+  const floatBtn = document.getElementById("floatingButton");
+  const pdfBtn = document.getElementById("pdfButton");
+
+  floatBtn.style.display = (tab === "fill") ? "flex" : "none";
+  pdfBtn.style.display = (tab === "diet-off") ? "flex" : "none";
+
+  // Specific content loading based on tab
+  if (tab === 'saved') loadSavedDiets();
+  if (tab === 'fill') showDateInput();
+  if (tab === 'diet-off') loadDietOffList();
+}
+
+// Handle URL fragment change on page load
+window.addEventListener('load', () => {
+  const tabFromHash = window.location.hash.substring(1); // Get the part after '#'
+  if (tabFromHash) {
+    switchTab(tabFromHash); // Remove event parameter, pass only the tab name
+  } else {
+    // Default to the 'password' tab if no hash is present
+    switchTab('password');
+  }
+});
+
+
+document.getElementById("pdfButton").addEventListener("click", generateDietOffPDF);
+
+async function generateDietOffPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const title = "Welfare Mess Diet Off List";
+  const softwareNote = "Note: This is a software generated list. Software designed and created by Rahul Gupta (+91 89053 78987)";
+  const disclaimer = "Disclaimer: These balances are preliminary representations and are subject to adjustment upon finalization of the balance sheet.";
+
+  const header = ["Name", "Room Number", "Debit Balance"];
+  const dietOffStatusIndex = sheetDataOff[0].indexOf("Diet_Off_Status");
+  const dietConsumedIndex = 6;
+
+  const selectedOption = document.querySelector('input[name="dietOffView"]:checked')?.value || "all";
+  const filteredData = sheetDataOff
+    .slice(1)
+    .filter(row => row[dietOffStatusIndex] === "Diet_Off")
+    .filter(row => selectedOption !== "consumed" || parseInt(row[dietConsumedIndex]) > 0)
+    .map(row => [row[1], row[2], row[8]]); // [Name, Room Number, Debit Balance]
+
+  drawHeader(doc, pageWidth, title);
+  drawNoteSection(doc, softwareNote, disclaimer);
+  drawTables(doc, filteredData, header);
+
+  doc.save("Diet_Off_List.pdf");
+}
+
+function drawHeader(doc, pageWidth, title) {
+  doc.setFillColor(0, 102, 204);
+  doc.rect(0, 0, pageWidth, 20, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text(title, pageWidth / 2, 12, { align: "center" });
+}
+
+function drawNoteSection(doc, softwareNote, disclaimer) {
+  const pageHeight = doc.internal.pageSize.height; // Get the page height
+  const bottomMargin = 10; // Margin from the bottom
+
+  // Set font and font size for software note
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5);
+  doc.setTextColor(0, 0, 0);
+
+  // Position the software note at the bottom of the page
+  doc.text(softwareNote, 10, pageHeight - bottomMargin);
+
+  // Set the disclaimer in red color
+  doc.setTextColor(255, 0, 0);
+  doc.setFontSize(10);
+
+  doc.text(disclaimer, 10, 25); // Disclaimer stays at fixed position (10, 25)
+}
+
+
+function drawTables(doc, data, header) {
+  const xPositions = [10, 100];
+  const chunkSize = 36;
+  const tableWidth = 80;
+  const startY = 40;
+
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const chunk = data.slice(i, i + chunkSize);
+    const colIndex = (i / chunkSize) % xPositions.length;
+    const x = xPositions[colIndex];
+    const y = startY + Math.floor(i / (chunkSize * xPositions.length)) * ((chunkSize * 7) + 20);
+
+    doc.autoTable({
+      startY: y,
+      margin: { left: x },
+      head: [header],
+      body: chunk,
+      tableWidth,
+      styles: {
+        fontSize: 8,
+        cellPadding: 1.5,
+        overflow: 'linebreak',
+      },
+      headStyles: {
+        fillColor: [22, 160, 133],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+      },
+      theme: 'striped',
+    });
+  }
+}
+
+
+
+
+
+
+function savePassword() {
+  const input = document.getElementById("passwordInput").value;
+  if (input === PASSWORD) {
+    localStorage.setItem("staffPass", input);
+    alert("Password saved.");
+  } else {
+    alert("Incorrect password.");
+  }
+}
+
+async function fetchSheet1() {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME1}?key=${API_KEY}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  return json.values;
+}
+
+
+async function loadDietOffList() {
+  if (sheetDataOff.length === 0) {
+    sheetDataOff = await fetchSheet1();
+  }
+
+  const headers = sheetDataOff[0];
+  const dietOffStatusIndex = headers.indexOf("Diet_Off_Status");
+  const dietConsumedIndex = 6; // Adjusted as per your sheet
+
+  if (dietOffStatusIndex === -2) {
+    alert("Diet Off Status column not found.");
+    return;
+  }
+
+  // ✅ Get previous selection from a variable or default to "all"
+  const prevSelected = document.querySelector('input[name="dietOffView"]:checked');
+  const selectedOption = prevSelected ? prevSelected.value : "all";
+
+  // ✅ Build toggle, checking the selected value properly
+  let html = `
+    <div class="card">
+      <label>
+        <input type="radio" name="dietOffView" value="all" ${selectedOption === "all" ? "checked" : ""} onchange="loadDietOffList()"> All Members
+      </label>
+      <label style="margin-left: 1rem;">
+        <input type="radio" name="dietOffView" value="consumed" ${selectedOption === "consumed" ? "checked" : ""} onchange="loadDietOffList()"> Members Consumed Diet
+      </label>
+    </div>
+  `;
+
+  // ✅ Filter by "Diet_Off" and optionally "Consumed > 0"
+  let filtered = sheetDataOff.slice(1).filter(row => row[dietOffStatusIndex] === "Diet_Off");
+
+  if (selectedOption === "consumed") {
+    filtered = filtered.filter(row => parseInt(row[dietConsumedIndex]) > 0);
+  }
+
+ // ✅ Display list
+ if (filtered.length === 0) {
+   html += `<div class='card'>No matching members found.</div>`;
+ } else {
+   html += `<div class="diet-off-card">`;
+
+   filtered.forEach(row => {
+     const name = row[1];         // Name in column 2
+     const room = row[2];         // Room in column 3
+     const debitBalance = row[8]; // Debit Balance in column 9
+
+     html += `
+       <div class="diet-off-card-content">
+         <strong>${name}</strong><br/>
+         <span>Room: ${room}</span><br/>
+         <span>Debit Balance: ${debitBalance}</span>
+       </div>
+     `;
+   });
+
+   html += `</div>`;
+ }
+
+  // ✅ Update the tab content
+  document.getElementById("tab-diet-off").innerHTML = html;
+}
+
+async function fetchSheet() {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  return json.values;
+}
+
+
+
+function showDateInput() {
+  document.getElementById("tab-fill").innerHTML = `
+    <div class="card" style="display: flex; gap: 1rem; align-items: center;">
+      <label for="dateInput" style="flex: 1;">Select Date:</label>
+      <input type="date" id="dateInput" style="flex: 2;" />
+      <button onclick="confirmDate()" style="padding: 0.5rem 1rem; background: #6200ea; color: white; border: none; border-radius: 6px;">Select</button>
+    </div>
+    <div id="fill-diets-list"></div>
+  `;
+}
+
+async function confirmDate() {
+  const dateInput = document.getElementById("dateInput");
+  if (!dateInput.value) {
+    alert("Please choose a date first.");
+    return;
+  }
+
+  const result = formatDateToHeader(dateInput.value);
+
+  selectedDate = result.display;           // e.g., "1-Apr-2024" → for saving
+  const columnHeader = result.sheetHeader; // e.g., "1-Apr" → matches sheet header
+
+  if (sheetData.length === 0) {
+    sheetData = await fetchSheet();
+  }
+
+  loadFillDiets(columnHeader); // Pass the sheet-compatible header
+}
+
+
+function formatDateToHeader(input) {
+  const date = new Date(input);
+
+  const day = date.getDate();
+  const month = date.toLocaleString("en-GB", { month: "short" });
+  const year = date.getFullYear();
+
+  return {
+    display: `${day}-${month}-${year}`,  // used for saving/submitting
+    sheetHeader: `${day}-${month}`       // used for matching sheet column
+  };
+}
+
+
+async function loadSavedDiets() {
+  const data = await fetchSheet();
+  sheetData = data;
+  const headers = data[0];
+  const dateIndexes = headers.map((h, i) => ({ h, i })).filter(x => x.i > 3);
+
+  let html = "";
+  dateIndexes.forEach(({ h }) => {
+    html += `<div class="card" onclick="showDateDashboard('${h}')"><b>${h}</b></div>`;
+  });
+
+  document.getElementById("tab-saved").innerHTML = html;
+}
+
+function showDateDashboard(date) {
+  document.getElementById("topControls").style.display = "flex";
+  selectedDate = date;
+  const headers = sheetData[0];
+  const colIndex = headers.indexOf(date);
+  savedDateData = sheetData.slice(1).filter(row => row[0] !== "0");
+
+  let html = `<input id="searchInput" type="text" placeholder="Search member..." onkeyup="filterMembers()" />`;
+  html += `<div id="saved-dashboard">`;
+
+  savedDateData.forEach(row => {
+    const name = row[2];
+    const room = row[3];
+    const diet = row[colIndex] || "0";
+    html += `<div class="card member-card"><b>${name}</b> (Room ${room})<br/>Diet: ${diet}</div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById("tab-saved").innerHTML = html;
+}
+
+function backToDateCards() {
+  document.getElementById("topControls").style.display = "none";
+  loadSavedDiets();
+}
+
+function filterMembers() {
+  const val = document.getElementById("searchInput").value.toLowerCase();
+  const cards = document.querySelectorAll("#saved-dashboard .member-card");
+  cards.forEach(card => {
+    card.style.display = card.textContent.toLowerCase().includes(val) ? "block" : "none";
+  });
+}
+
+function loadFillDiets(columnHeader) {
+  const headers = sheetData[0];
+  let colIndex = headers.indexOf(columnHeader);
+  if (colIndex === -1) {
+    headers.push(columnHeader);
+    for (let i = 1; i < sheetData.length; i++) sheetData[i].push("0");
+    colIndex = headers.length - 1;
+  }
+
+  members = sheetData.slice(1).filter(row => row[0] !== "0");
+  let html = "";
+  members.forEach((row, idx) => {
+    const name = row[2];
+    const room = row[3];
+    const email = row[0];
+    const diet = row[colIndex] || "0";
+    currentDiets[email] = diet;
+    html += `<div class="card">
+      <b>${name}</b> (Room ${room})<br/>
+      <div class="diet-buttons" id="diet-${idx}">
+        ${[0,1,2,3,4,5].map(v => `<button class="diet-button ${diet == v ? 'selected' : ''}" onclick="selectDiet('${email}', ${v}, ${idx})">${v}</button>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById("fill-diets-list").innerHTML = html;
+}
+
+function selectDiet(email, val, idx) {
+  currentDiets[email] = val;
+  const buttons = document.getElementById(`diet-${idx}`).children;
+  for (let btn of buttons) btn.classList.remove("selected");
+  buttons[val].classList.add("selected");
+}
+
+async function submitDiets() {
+  // Check if a date is selected
+  if (!selectedDate) {
+    showDialog("Error", "Please select a date.");
+    return;
+  }
+
+  // Prepare the payload
+  const payload = {
+    date: selectedDate,
+    diets: currentDiets
+  };
+
+  // Show loading screen
+  showLoadingScreen(true);
+
+  try {
+    // Make the POST request
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      mode: "no-cors"
+    });
+
+    // Hide loading screen after request completes
+    showLoadingScreen(false);
+
+    // Show success dialog box
+    showDialog("Success", "Diet saved successfully!");
+  } catch (err) {
+    // Hide loading screen if an error occurs
+    showLoadingScreen(false);
+
+    // Show error dialog box
+    showDialog("Error", "Failed to save data.");
+    console.error(err);
+  }
+}
+
+// Function to show a dialog box
+function showDialog(title, message) {
+  const dialog = document.createElement('div');
+  dialog.className = 'dialog-overlay';
+
+  const dialogBox = document.createElement('div');
+  dialogBox.className = 'dialog-box';
+
+  const dialogTitle = document.createElement('h3');
+  dialogTitle.textContent = title;
+
+  const dialogMessage = document.createElement('p');
+  dialogMessage.textContent = message;
+
+  const closeButton = document.createElement('button');
+  closeButton.textContent = 'Close';
+  closeButton.onclick = () => {
+    dialog.remove();
+    // Refresh the page after closing the dialog
+    location.reload();  // This will reload the page and refresh all content
+  };
+
+  dialogBox.appendChild(dialogTitle);
+  dialogBox.appendChild(dialogMessage);
+  dialogBox.appendChild(closeButton);
+  dialog.appendChild(dialogBox);
+  document.body.appendChild(dialog);
+}
+
+function showLoadingScreen(show) {
+  let loadingScreen = document.getElementById('loading-screen');
+  
+  if (show) {
+    if (!loadingScreen) {
+      loadingScreen = document.createElement('div');
+      loadingScreen.id = 'loading-screen';
+      loadingScreen.className = 'loading-screen';
+      loadingScreen.innerHTML = `
+        <div class="loading-spinner"></div>
+        <p>Loading, please wait...</p>
+      `;
+      document.body.appendChild(loadingScreen);
+    }
+  } else {
+    if (loadingScreen) {
+      loadingScreen.remove();
+    }
+  }
+}
+</script>
+</body>
+</html>
